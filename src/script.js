@@ -28,14 +28,14 @@ sky.material.uniforms['sunPosition'].value.set(0.3, -0.038, -0.95)
  * mesh
  */
 
-const receiverPlaneGeometry = new THREE.PlaneGeometry(2, 2, 32, 32)
+const receiverPlaneGeometry = new THREE.BoxGeometry(2, 2, 2, 32, 32)
 const receiverPlaneMaterial = new THREE.ShaderMaterial({
     vertexShader: receiverVertexShader,
     fragmentShader: receiverFragmentShader,
     uniforms: {
-        uProjectorTextures: { value: [] },
-        uProjectorMatrices: { value: [] },
-        uProjectorScales: { value: [] },
+        uProjectorTextures: { value: null },
+        uProjectorMatrices: { value: new THREE.Matrix4() },
+        uProjectorScales: { value: new THREE.Vector2(1, 1) },
     },
 })
 
@@ -61,23 +61,13 @@ projectorGeometry.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 1))
 // Mesh
 const receiver = new THREE.Mesh(receiverPlaneGeometry, receiverPlaneMaterial)
 scene.add(receiver)
+receiver.position.set(0, 0, -1)
 
-// const projectors = []
-// const projectorsNb = 3
-// for (let i = 0; i < projectorsNb; i++) {
-//     const projector = new THREE.Mesh(projectorGeometry, projectorMaterial)
-//     projector.position.set((i * 3 - projectorsNb) * 0.15, 0, 1)
-//     projector.lookAt(receiver.position)
-//     scene.add(projector)
-    // projectors.push(projector)
-// }
 const projector = new THREE.Mesh(projectorGeometry, projectorMaterial)
-projector.position.set(0, 0, 1) // Adjust position as needed
-// projector.lookAt(receiver.position)
+projector.position.set(0, 0, 1)
 scene.add(projector)
 
 
-// const renderTarget = projectors.map(() => new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight)) 
 const renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight)
 
 const sizes = {
@@ -143,44 +133,19 @@ function calculateProjectorMatrix(projector, camera) {
 }
 
 const tick = () =>
-{
-    // Time
-    const elapsedTime = clock.getElapsedTime()
-
-    // Update material
-    // projectors.forEach((projector, index) => {
+    {
+        const elapsedTime = clock.getElapsedTime()
+    
         projectorMaterial.uniforms.uTime.value = elapsedTime
-
+        
         renderer.setRenderTarget(renderTarget)
         renderer.render(projector, camera)
-    // })
-    // Update controls
-    controls.update()
-
-    // const projectorTextures = renderTarget.map(rt => rt.texture)
-    // const projectorMatrices = projectors.map(projector => calculateProjectorMatrix(projector, camera))
-    // const projectorScales = projectors.map(projector => new THREE.Vector2(
-    //     projector.geometry.parameters.width / receiver.geometry.parameters.width,
-    //     projector.geometry.parameters.height / receiver.geometry.parameters.height
-    // ))
-
-    // receiverPlaneMaterial.uniforms.uProjectorTextures.value = projectorTextures
-    // receiverPlaneMaterial.uniforms.uProjectorMatrices.value = projectorMatrices
-    // receiverPlaneMaterial.uniforms.uProjectorScales.value = projectorScales
-
+        controls.update()
 
     // Prepare uniforms for the receiver shader
     const projectorTexture = renderTarget.texture
-    const projectorMatrix = calculateProjectorMatrix(projector, camera)
-    const projectorScale = new THREE.Vector2(
-        projector.geometry.parameters.width / receiver.geometry.parameters.width,
-        projector.geometry.parameters.height / receiver.geometry.parameters.height
-    )
 
-    receiverPlaneMaterial.uniforms.uProjectorTextures.value = [projectorTexture]
-    receiverPlaneMaterial.uniforms.uProjectorMatrices.value = [projectorMatrix]
-    receiverPlaneMaterial.uniforms.uProjectorScales.value = [projectorScale]
-
+    receiverPlaneMaterial.uniforms.uProjectorTextures.value = projectorTexture
 
     renderer.setRenderTarget(null)
     renderer.render(scene, camera)
