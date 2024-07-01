@@ -11,6 +11,26 @@ import { Sky } from 'three/addons/objects/Sky.js'
 const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
+const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight
+}
+
+window.addEventListener('resize', () =>
+{
+    // Update sizes
+    sizes.width = window.innerWidth
+    sizes.height = window.innerHeight
+
+    // Update camera
+    camera.aspect = sizes.width / sizes.height
+    camera.updateProjectionMatrix()
+
+    // Update renderer
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+})
+
 const ambientLight = new THREE.AmbientLight(0xffffff, 5)
 scene.add(ambientLight)
 
@@ -24,7 +44,7 @@ sky.material.uniforms['mieDirectionalG'].value = 0.95
 sky.material.uniforms['sunPosition'].value.set(0.3, -0.038, -0.95)
 
 /**
- * mesh
+ * geometry material
  */
 
 const receiverPlaneGeometry = new THREE.BoxGeometry(2, 2, 2, 32, 32)
@@ -57,7 +77,9 @@ for(let i = 0; i < count; i++)
 
 projectorGeometry.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 1))
 
-// Mesh
+/**
+ * mesh
+ */
 const receiver = new THREE.Mesh(receiverPlaneGeometry, receiverPlaneMaterial)
 scene.add(receiver)
 receiver.position.set(0, 0, -1)
@@ -66,35 +88,20 @@ const projector = new THREE.Mesh(projectorGeometry, projectorMaterial)
 projector.position.set(0, 0, 1)
 scene.add(projector)
 
-
-const renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight)
-
-const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
-}
-
-window.addEventListener('resize', () =>
-{
-    // Update sizes
-    sizes.width = window.innerWidth
-    sizes.height = window.innerHeight
-
-    // Update camera
-    camera.aspect = sizes.width / sizes.height
-    camera.updateProjectionMatrix()
-
-    // Update renderer
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-})
-
 /**
  * Camera
  */
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
 camera.position.set(-2, 1, 3)
 scene.add(camera)
+
+const projectorCamera = new THREE.PerspectiveCamera(30, sizes.width / sizes.height, 0.1, 2)
+projectorCamera.position.set(0, 0, 1.7)
+projectorCamera.lookAt(receiver.position)
+scene.add(projectorCamera)
+
+const cameraHelper = new THREE.CameraHelper(projectorCamera)
+scene.add(cameraHelper)
 
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
@@ -108,10 +115,7 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-const projectorCamera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-projectorCamera.position.set(0, 0, 1.7)
-projectorCamera.lookAt(receiver.position)
-scene.add(projectorCamera)
+const renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight)
 
 /**
  * Animate
