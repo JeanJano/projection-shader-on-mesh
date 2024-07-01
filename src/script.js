@@ -9,7 +9,6 @@ import { Sky } from 'three/addons/objects/Sky.js'
  * Base
  */
 const canvas = document.querySelector('canvas.webgl')
-
 const scene = new THREE.Scene()
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 5)
@@ -33,9 +32,9 @@ const receiverPlaneMaterial = new THREE.ShaderMaterial({
     vertexShader: receiverVertexShader,
     fragmentShader: receiverFragmentShader,
     uniforms: {
-        uProjectorTextures: { value: null },
-        uProjectorMatrices: { value: new THREE.Matrix4() },
-        uProjectorScales: { value: new THREE.Vector2(1, 1) },
+        uProjectorTexture: { value: null },
+        uProjectorMatrice: { value: new THREE.Matrix4() },
+        uProjectorScale: { value: new THREE.Vector2() },
     },
 })
 
@@ -109,48 +108,36 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
+const projectorCamera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+projectorCamera.position.set(0, 0, 1.7)
+projectorCamera.lookAt(receiver.position)
+scene.add(projectorCamera)
+
 /**
  * Animate
  */
 
 const clock = new THREE.Clock()
 
-function calculateProjectorMatrix(projector, camera) {
-    const inverseCameraMatrix = new THREE.Matrix4();
-    if (camera.matrixWorldInverse) {
-        inverseCameraMatrix.copy(camera.matrixWorldInverse);
-    } else {
-        inverseCameraMatrix.invert(camera.matrixWorld);
-    }
-
-    // Step 2 & 3: Multiply the inverse camera matrix with the projector's world matrix
-    const projectorMatrix = new THREE.Matrix4().multiplyMatrices(inverseCameraMatrix, projector.matrixWorld);
-
-    // Step 4: Apply the camera's projection matrix
-    projectorMatrix.multiply(camera.projectionMatrix);
-
-    return projectorMatrix;
-}
-
 const tick = () =>
-    {
-        const elapsedTime = clock.getElapsedTime()
-    
-        projectorMaterial.uniforms.uTime.value = elapsedTime
-        
-        renderer.setRenderTarget(renderTarget)
-        renderer.render(projector, camera)
-        controls.update()
+{
+    const elapsedTime = clock.getElapsedTime()
 
+    projectorMaterial.uniforms.uTime.value = elapsedTime
+    
+    renderer.setRenderTarget(renderTarget)
+    renderer.render(projector, projectorCamera)
+    
     // Prepare uniforms for the receiver shader
     const projectorTexture = renderTarget.texture
 
-    receiverPlaneMaterial.uniforms.uProjectorTextures.value = projectorTexture
+    receiverPlaneMaterial.uniforms.uProjectorTexture.value = projectorTexture
 
     renderer.setRenderTarget(null)
     renderer.render(scene, camera)
 
     // Call tick again on the next frame
+    controls.update()
     window.requestAnimationFrame(tick)
 }
 
