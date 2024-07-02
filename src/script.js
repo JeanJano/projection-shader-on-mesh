@@ -100,7 +100,7 @@ const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 
 camera.position.set(-2, 1, 3)
 scene.add(camera)
 
-const projectorCamera = new THREE.PerspectiveCamera(5, sizes.width / sizes.height, 0.1, 4)
+const projectorCamera = new THREE.PerspectiveCamera(5, sizes.width / sizes.height, 0.1, 6)
 projectorCamera.position.set(0, 0, 1.7)
 scene.add(projectorCamera)
 
@@ -194,6 +194,11 @@ const tick = () =>
 
     // Call tick again on the next frame
     controls.update()
+
+    projector1Group.position.x = Math.sin(elapsedTime) * 0.2
+    projector1Group.position.y = - Math.cos(elapsedTime) * 0.2 * Math.sin(elapsedTime)
+    projector1Group.position.z = Math.cos(elapsedTime) * 0.8
+
     window.requestAnimationFrame(tick)
 }
 
